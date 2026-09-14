@@ -1,0 +1,78 @@
+---
+# Legacy Ansible role - web server deployment
+# Contains multiple deprecated patterns for modernization testing
+
+- name: install required packages
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - httpd
+    - mod_ssl
+    - php
+    - php-mysql
+  sudo: yes
+  sudo_user: root
+
+- name: configure firewall
+  shell: firewall-cmd --permanent --add-service={{ item }}
+  with_items:
+    - http
+    - https
+  sudo: yes
+  notify: reload firewall
+
+- name: deploy apache config
+  template:
+    src: httpd.conf.j2
+    dest: /etc/httpd/conf/httpd.conf
+    owner: root
+    group: root
+    mode: 0644
+  sudo: yes
+  notify: restart httpd
+
+- name: set hostname fact
+  set_fact:
+    server_hostname: "{{ ansible_hostname }}"
+    server_ip: "{{ ansible_default_ipv4.address }}"
+
+- name: create vhost directories
+  file:
+    path: "/var/www/{{ item }}"
+    state: directory
+    owner: apache
+    group: apache
+  with_items:
+    - "{{ vhost_name }}"
+    - "{{ vhost_name }}/html"
+    - "{{ vhost_name }}/logs"
+  sudo: yes
+
+- name: deploy vhost config
+  template:
+    src: vhost.conf.j2
+    dest: "/etc/httpd/conf.d/{{ vhost_name }}.conf"
+  sudo: yes
+  notify: restart httpd
+
+- name: ensure httpd is running
+  service:
+    name: httpd
+    state: started
+    enabled: yes
+  sudo: yes
+
+- name: install docker
+  include: docker_setup.yml
+  when: install_docker
+
+- name: setup monitoring
+  docker_container:
+    name: node-exporter
+    image: prom/node-exporter:latest
+    ports:
+      - "9100:9100"
+    restart_policy: always
+  sudo: yes
+  when: monitoring_enabled
