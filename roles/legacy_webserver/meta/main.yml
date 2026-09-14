@@ -1,0 +1,12 @@
+---
+galaxy_info:
+  role_name: legacy_webserver
+  author: QE Test
+  description: Legacy web server role for modernization testing
+  min_ansible_version: "2.4"
+  platforms:
+    - name: EL
+      versions:
+        - 7
+        - 8
+dependencies: []
