@@ -1,0 +1,6 @@
+---
+vhost_name: default-site
+install_docker: false
+monitoring_enabled: false
+server_port: 80
+ssl_enabled: yes
