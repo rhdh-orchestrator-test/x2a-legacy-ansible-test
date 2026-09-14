@@ -1,0 +1,10 @@
+---
+- name: restart httpd
+  service:
+    name: httpd
+    state: restarted
+  sudo: yes
+
+- name: reload firewall
+  shell: firewall-cmd --reload
+  sudo: yes
